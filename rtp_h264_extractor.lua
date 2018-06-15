@@ -29,7 +29,7 @@ do
     --local bit = require("bit32") -- only work after 1.10.1 (only support in Lua 5.2)  
     local version_str = string.match(_VERSION, "%d+[.]%d*")  
     local version_num = version_str and tonumber(version_str) or 5.1  
-    local bit = (version_num >= 5.2) and require("bit32") or require("bit")  
+    local bit = (version_num >= 5.2) and require("bit32") or require("bit") 
   
     -- for geting h264 data (the field's value is type of ByteArray)  
     local f_h264 = Field.new("h264")   
@@ -85,8 +85,23 @@ do
             key = key:gsub(":", ".")  
             local stream_info = stream_infos[key]  
             if not stream_info then -- if not exists, create one  
-                stream_info = { }  
-                stream_info.filename = key.. ".264"  
+                stream_info = { }
+
+                local save_path = os.getenv("WIRESHARK_H264_PATH")
+                if  not save_path then
+                    -- check dir exists, before
+                    local file = io.open(save_dir, "rb")
+                    if file then 
+                        file:close()
+                    else
+                        os.execute("mkdir -p " .. save_dir) 
+                    end
+
+                    stream_info.filename = save_dir .. "/" .. key .. ".264"  
+                else
+                    stream_info.filename = key .. ".264"
+                end
+
                 stream_info.file = io.open(stream_info.filename, "wb")  
                 stream_info.counter = 0 -- counting h264 total NALUs  
                 stream_info.counter2 = 0 -- for second time running  
